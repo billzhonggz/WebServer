@@ -16,7 +16,7 @@
 
 int main(int argc, char **argv) {
 
-	char szBuff[100];
+	char szBuff[1000];
 	int msg_len;
 	int addr_len;
 	struct sockaddr_in local, client_addr;
