@@ -27,14 +27,8 @@
 
 
 #define ALLOW                "Allow:GET"    /* the server allow GET request method*/
-#define SERVER                "Server:Windows NT 6.2"
+#define SERVER                "Server:LittleWebServer/Windows NT 5.0"
 
-
-/* if the connect protocol is http then this function deal with it */
-int http_session(int *connect_fd, struct sockaddr_in *client_addr);
-
-/* if http protocol return 1, else return 0 */
-int is_http_protocol(char *msg_from_client);
 
 /* get the request header's uri */
 char *get_uri(char *req_header, char *uri_buf);
@@ -50,17 +44,9 @@ char *get_mime_type(char *uri);
 /* read the file which requested by client in uri ,and store in entity_buf.
 success return bytes readed,error return -1
 */
-int get_file_disk(char *uri, unsigned char *entity_buf);
-
-/* set http replay header's status:
-200:ok
-404:file not found
-
-*/
-int set_rep_status();
+int get_file_disk(char *uri, unsigned char *entity_buf, char *type);
 
 int set_error_information(unsigned char *send_buf, int errorno);
-
 
 int reply_normal_information(unsigned char *send_buf, unsigned char *file_buf, int file_size, char *mime_type);
 

@@ -23,20 +23,11 @@
 int main(void) {
 
 	printf("Initializing variables\n");
-	//char* recv_buf = new char[RECV_BUFFER_SIZE + 1];
 	char recv_buf[4096] = { '\0' };
 	unsigned char send_buf[100000] = { '\0' };
 	unsigned char *file_buf = new unsigned char[FILE_MAX_SIZE + 1];
-	/*memset(recv_buf, '\0', sizeof(recv_buf));
-	memset(send_buf, '\0', sizeof(send_buf));
-	memset(file_buf, '\0', sizeof(file_buf));*/
 	char uri_buf[URI_SIZE + 1] = { '\0' };
-	//memset(uri_buf, '\0', sizeof(uri_buf));
 	char *mime_type;
-
-	//struct timeval timeout;
-	//timeout.tv_sec = TIME_OUT_SEC;
-	//timeout.tv_usec = TIME_OUT_USEC;
 
 	int msg_len;
 	int addr_len;
@@ -140,7 +131,7 @@ int main(void) {
 				printf("File OK!\n");
 				mime_type = get_mime_type(uri_buf);
 				printf("Mime type is %s.\n", mime_type);
-				file_size = get_file_disk(uri_buf, file_buf);
+				file_size = get_file_disk(uri_buf, file_buf, mime_type);
 				send_bytes = reply_normal_information(send_buf, file_buf, file_size, mime_type);
 				break;
 			case FILE_NOT_FOUND:
@@ -161,7 +152,6 @@ int main(void) {
 			printf("Client closed connection, sending no information\n");
 			closesocket(msg_sock);
 			connCount--;
-			//return -1;
 		}
 		closesocket(msg_sock);
 		connCount--;
@@ -289,39 +279,34 @@ char *get_mime_type(char *uri)
 
 // TODO: Open file.
 // Function returns file size. File goes to file_buf.
-int get_file_disk(char *uri, unsigned char *file_buf)
+int get_file_disk(char *uri, unsigned char *file_buf, char *type)
 {
 	int read_count = 0;
-	//FILE* fp = NULL;
-	//fp = fopen(uri, "r+");
-	int fd = open(uri, O_RDONLY);
-	if (fd == 0)
-	{
-		perror("File open failed!");
-		return -1;
-	}
+	FILE* fp = NULL;
 
-	unsigned long st_size;
-	struct stat st;
-	if (fstat(fd, &st) == -1)
+	// Read text files.
+	if (strstr(type, "text") != NULL)
 	{
-		perror("stat() in get_file_disk http_session.c\n");
-		return -1;
+		fp = fopen(uri, "r+");
+		if (fp == NULL)
+			perror("File open failed.\n");
+		else
+			read_count = fread(file_buf, sizeof(char), (FILE_MAX_SIZE / sizeof(char) + 1), fp);
 	}
-	st_size = st.st_size;
-	if (st_size > FILE_MAX_SIZE)
+	// Read binary files.
+	else
 	{
-		fprintf(stderr, "the file %s is too large.\n", uri);
-		return -1;
+		fp = fopen(uri, "rb");
+		if (fp == NULL)
+			perror("File open failed.\n");
+		read_count = fread(file_buf, 1, FILE_MAX_SIZE, fp);
 	}
-	// Read file with file handle.
-	read_count = read(fd, file_buf, FILE_MAX_SIZE);
 	if (read_count == -1)
 	{
 		perror("read() in get_file_disk http_session.c");
 		return -1;
 	}
-	printf("file %s size : %lu , read %d\n", uri, st_size, read_count);
+	fclose(fp);
 	return read_count;
 }
 
