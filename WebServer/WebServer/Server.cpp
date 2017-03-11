@@ -25,12 +25,12 @@ int main(void) {
 	printf("Initializing variables\n");
 	//char* recv_buf = new char[RECV_BUFFER_SIZE + 1];
 	char recv_buf[4096] = { '\0' };
-	char send_buf[100000] = { '\0' };
+	unsigned char send_buf[100000] = { '\0' };
 	unsigned char *file_buf = new unsigned char[FILE_MAX_SIZE + 1];
 	/*memset(recv_buf, '\0', sizeof(recv_buf));
 	memset(send_buf, '\0', sizeof(send_buf));
 	memset(file_buf, '\0', sizeof(file_buf));*/
-	char *uri_buf = new char[URI_SIZE + 1];
+	char uri_buf[URI_SIZE + 1] = { '\0' };
 	//memset(uri_buf, '\0', sizeof(uri_buf));
 	char *mime_type;
 
@@ -139,12 +139,12 @@ int main(void) {
 			case FILE_OK:
 				printf("File OK!\n");
 				mime_type = get_mime_type(uri_buf);
-				printf("Mime type is %s", mime_type);
+				printf("Mime type is %s.\n", mime_type);
 				file_size = get_file_disk(uri_buf, file_buf);
 				send_bytes = reply_normal_information(send_buf, file_buf, file_size, mime_type);
 				break;
 			case FILE_NOT_FOUND:
-				printf("In switch on case FILE_NOT_FOUND");
+				printf("In switch on case FILE_NOT_FOUND\n");
 				send_bytes = set_error_information(send_buf, FILE_NOT_FOUND);
 				break;
 			case FILE_FORBIDEN:
@@ -156,7 +156,7 @@ int main(void) {
 			}
 		}
 
-		msg_len = send(msg_sock, send_buf, sizeof(send_buf), 0);
+		msg_len = send(msg_sock, (char*)send_buf, sizeof(send_buf), 0);
 		if (msg_len == 0) {
 			printf("Client closed connection, sending no information\n");
 			closesocket(msg_sock);
@@ -192,6 +192,7 @@ char *get_uri(char *req_header, char *uri_buf)
 		return uri_buf;
 	}
 	strncpy(uri_buf, req_header + base + 1, index - base - 1);
+	printf(uri_buf);
 	return uri_buf;
 
 }
@@ -293,7 +294,7 @@ int get_file_disk(char *uri, unsigned char *file_buf)
 	int read_count = 0;
 	//FILE* fp = NULL;
 	//fp = fopen(uri, "r+");
-	int fd = _open(uri, O_RDONLY);
+	int fd = open(uri, O_RDONLY);
 	if (fd == 0)
 	{
 		perror("File open failed!");
@@ -304,7 +305,7 @@ int get_file_disk(char *uri, unsigned char *file_buf)
 	struct stat st;
 	if (fstat(fd, &st) == -1)
 	{
-		perror("stat() in get_file_disk http_session.c");
+		perror("stat() in get_file_disk http_session.c\n");
 		return -1;
 	}
 	st_size = st.st_size;
@@ -313,7 +314,9 @@ int get_file_disk(char *uri, unsigned char *file_buf)
 		fprintf(stderr, "the file %s is too large.\n", uri);
 		return -1;
 	}
-	if ((read_count = read(fd, file_buf, FILE_MAX_SIZE)) == -1)
+	// Read file with file handle.
+	read_count = read(fd, file_buf, FILE_MAX_SIZE);
+	if (read_count == -1)
 	{
 		perror("read() in get_file_disk http_session.c");
 		return -1;
@@ -323,7 +326,7 @@ int get_file_disk(char *uri, unsigned char *file_buf)
 }
 
 
-int set_error_information(char *send_buf, int errorno)
+int set_error_information(unsigned char *send_buf, int errorno)
 {
 	register int index = 0;
 	register int len = 0;
@@ -382,7 +385,7 @@ int set_error_information(char *send_buf, int errorno)
 }
 
 
-int reply_normal_information(char *send_buf, unsigned char *file_buf, int file_size, char *mime_type)
+int reply_normal_information(unsigned char *send_buf, unsigned char *file_buf, int file_size, char *mime_type)
 {
 	char *str = "HTTP/1.1 200 OK\r\nServer:Windows NT 6.2\r\nDate:";
 	register int index = strlen(str);

@@ -59,9 +59,9 @@ int get_file_disk(char *uri, unsigned char *entity_buf);
 */
 int set_rep_status();
 
-int set_error_information(char *send_buf, int errorno);
+int set_error_information(unsigned char *send_buf, int errorno);
 
 
-int reply_normal_information(char *send_buf, unsigned char *file_buf, int file_size, char *mime_type);
+int reply_normal_information(unsigned char *send_buf, unsigned char *file_buf, int file_size, char *mime_type);
 
 #endif
